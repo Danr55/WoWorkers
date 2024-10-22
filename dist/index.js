@@ -2,9 +2,7 @@ import inquirer from 'inquirer';
 import pkg from 'pg';
 const { Pool } = pkg;
 import dotenv from 'dotenv';
-
 dotenv.config();
-
 const pool = new Pool({
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
@@ -12,8 +10,7 @@ const pool = new Pool({
     database: process.env.DB_NAME,
     port: 5432,
 });
-
-async function displayMenu(): Promise<void> {
+async function displayMenu() {
     const choices = [
         { name: 'View all departments', value: 'VIEW_DEPARTMENTS' },
         { name: 'View all roles', value: 'VIEW_ROLES' },
@@ -24,16 +21,14 @@ async function displayMenu(): Promise<void> {
         { name: 'Update an employee role', value: 'UPDATE_EMPLOYEE_ROLE' },
         { name: 'Quit', value: 'QUIT' },
     ];
-
     const { choice } = await inquirer.prompt([
         {
             type: 'list',
             name: 'choice',
             message: 'What would you like to do?',
             choices: choices,
-        },   
+        },
     ]);
-
     switch (choice) {
         case 'VIEW_DEPARTMENTS':
             await viewDepartments();
@@ -64,19 +59,19 @@ async function displayMenu(): Promise<void> {
             await displayMenu();
     }
 }
-
-async function viewDepartments(): Promise<void> {
+async function viewDepartments() {
     try {
         const result = await pool.query('SELECT * FROM departments');
         console.table(result.rows);
-    } catch (err) {
+    }
+    catch (err) {
         console.error('Error fetching departments:', err);
-    } finally {
+    }
+    finally {
         await displayMenu();
     }
 }
-
-async function viewRoles(): Promise<void> {
+async function viewRoles() {
     try {
         const result = await pool.query(`
             SELECT roles.id, roles.title, roles.salary, departments.name as department
@@ -84,14 +79,15 @@ async function viewRoles(): Promise<void> {
             JOIN departments ON roles.department_id = departments.id
         `);
         console.table(result.rows);
-    } catch (err) {
+    }
+    catch (err) {
         console.error('Error fetching roles:', err);
-    } finally {
+    }
+    finally {
         await displayMenu();
     }
 }
-
-async function viewEmployees(): Promise<void> {
+async function viewEmployees() {
     try {
         const result = await pool.query(`
             SELECT 
@@ -108,14 +104,15 @@ async function viewEmployees(): Promise<void> {
             LEFT JOIN employees m ON e.manager_id = m.id
         `);
         console.table(result.rows);
-    } catch (err) {
+    }
+    catch (err) {
         console.error('Error fetching employees:', err);
-    } finally {
+    }
+    finally {
         await displayMenu();
     }
 }
-
-async function addDepartment(): Promise<void> {
+async function addDepartment() {
     const answers = await inquirer.prompt([
         {
             type: 'input',
@@ -124,26 +121,25 @@ async function addDepartment(): Promise<void> {
             validate: (input) => input.trim() !== '' || 'Department name cannot be empty'
         },
     ]);
-
     try {
         const query = 'INSERT INTO departments (name) VALUES ($1)';
         await pool.query(query, [answers.name]);
         console.log('Department added successfully!');
-    } catch (err) {
+    }
+    catch (err) {
         console.error('Error adding department:', err);
-    } finally {
+    }
+    finally {
         await displayMenu();
     }
 }
-
-async function addRole(): Promise<void> {
+async function addRole() {
     try {
         const departments = await pool.query('SELECT id, name FROM departments');
-        const departmentChoices = departments.rows.map((dep: { id: number; name: string }) => ({
+        const departmentChoices = departments.rows.map((dep) => ({
             name: dep.name,
             value: dep.id,
         }));
-
         const answers = await inquirer.prompt([
             {
                 type: 'input',
@@ -164,34 +160,32 @@ async function addRole(): Promise<void> {
                 choices: departmentChoices,
             },
         ]);
-
         const query = 'INSERT INTO roles (title, salary, department_id) VALUES ($1, $2, $3)';
         await pool.query(query, [answers.title, answers.salary, answers.department_id]);
         console.log('Role added successfully!');
-    } catch (err) {
+    }
+    catch (err) {
         console.error('Error adding role:', err);
-    } finally {
+    }
+    finally {
         await displayMenu();
     }
 }
-
-async function addEmployee(): Promise<void> {
+async function addEmployee() {
     try {
         const roles = await pool.query('SELECT id, title FROM roles');
-        const roleChoices = roles.rows.map((role: { id: number; title: string }) => ({
+        const roleChoices = roles.rows.map((role) => ({
             name: role.title,
             value: role.id,
         }));
-
         const employees = await pool.query('SELECT id, first_name, last_name FROM employees');
         const managerChoices = [
             { name: 'None', value: null },
-            ...employees.rows.map((emp: { id: number; first_name: string; last_name: string }) => ({
+            ...employees.rows.map((emp) => ({
                 name: `${emp.first_name} ${emp.last_name}`,
                 value: emp.id,
             }))
         ];
-
         const answers = await inquirer.prompt([
             {
                 type: 'input',
@@ -218,31 +212,29 @@ async function addEmployee(): Promise<void> {
                 choices: managerChoices,
             },
         ]);
-
         const query = 'INSERT INTO employees (first_name, last_name, role_id, manager_id) VALUES ($1, $2, $3, $4)';
         await pool.query(query, [answers.first_name, answers.last_name, answers.role_id, answers.manager_id]);
         console.log('Employee added successfully!');
-    } catch (err) {
+    }
+    catch (err) {
         console.error('Error adding employee:', err);
-    } finally {
+    }
+    finally {
         await displayMenu();
     }
 }
-
-async function updateEmployeeRole(): Promise<void> {
+async function updateEmployeeRole() {
     try {
         const employees = await pool.query('SELECT id, first_name, last_name FROM employees');
-        const employeeChoices = employees.rows.map((emp: { id: number; first_name: string; last_name: string }) => ({
+        const employeeChoices = employees.rows.map((emp) => ({
             name: `${emp.first_name} ${emp.last_name}`,
             value: emp.id,
         }));
-
         const roles = await pool.query('SELECT id, title FROM roles');
-        const roleChoices = roles.rows.map((role: { id: number; title: string }) => ({
+        const roleChoices = roles.rows.map((role) => ({
             name: role.title,
             value: role.id,
         }));
-
         const answers = await inquirer.prompt([
             {
                 type: 'list',
@@ -257,26 +249,26 @@ async function updateEmployeeRole(): Promise<void> {
                 choices: roleChoices,
             },
         ]);
-
         const query = 'UPDATE employees SET role_id = $1 WHERE id = $2';
         await pool.query(query, [answers.role_id, answers.employee_id]);
         console.log('Employee role updated successfully!');
-    } catch (err) {
+    }
+    catch (err) {
         console.error('Error updating employee role:', err);
-    } finally {
+    }
+    finally {
         await displayMenu();
     }
 }
-
-async function connectToDatabase(): Promise<void> {
+async function connectToDatabase() {
     try {
         await pool.connect();
         console.log('Connected to the database');
         await displayMenu();
-    } catch (err) {
+    }
+    catch (err) {
         console.error('Error connecting to the database:', err);
         process.exit(1);
     }
 }
-
 connectToDatabase();
