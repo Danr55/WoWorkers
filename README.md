@@ -45,4 +45,5 @@ Oscar Rendon
 Code sourced with help ChatGPT, Xpert learning Assistant.
 
 - github Link: https://github.com/Danr55/WoWorkers
-- Video Link: 
+- Video Link: https://drive.google.com/file/d/16avakcEnzWHxHkRA_mrksBnPJh8kGxvr/view
+
